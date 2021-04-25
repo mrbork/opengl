@@ -62,6 +62,8 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    glewExperimental = GL_TRUE;
+
     if ( glewInit() != GLEW_OK )
         printf("Failed to initialize GLEW\n");
 
