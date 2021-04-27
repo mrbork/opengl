@@ -117,7 +117,7 @@ int main()
     }
 
     /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow* window = glfwCreateWindow(640, 480, "OpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow( 640 , 480 , "OpenGL" , NULL , NULL );
     if ( !window )
     {
         glfwTerminate();
@@ -125,12 +125,12 @@ int main()
     }
 
     /* Make the window's context current */
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent( window );
 
     glewExperimental = GL_TRUE;
 
     if ( glewInit() != GLEW_OK )
-        printf("Failed to initialize GLEW\n");
+        printf( "Failed to initialize GLEW\n" );
 
     printf( "%s" , glGetString( GL_VERSION ) );
 
@@ -138,13 +138,13 @@ int main()
     CompileShaders();
 
     /* Loop until the user closes the window */
-    while ( !glfwWindowShouldClose(window) )
+    while ( !glfwWindowShouldClose( window ) )
     {
         /* Poll for and process events */
         glfwPollEvents();
 
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear( GL_COLOR_BUFFER_BIT );
 
         glUseProgram( shaders );
 
@@ -155,7 +155,7 @@ int main()
         glUseProgram( 0 );
 
         /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+        glfwSwapBuffers( window );
 
     }
 
