@@ -4,7 +4,8 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <GLM/mat4x4.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
+#include <GLM/gtc/type_ptr.hpp>
 
 
 void CreateTriangle(unsigned int& vao, unsigned int& vbo) {
@@ -101,9 +102,8 @@ unsigned int CompileProgram() {
 
 int main()
 {
-
-    unsigned int vao , vbo, uXtranslation, uYtranslation;
-    float uXoffset = 0.0f , uYoffset = 0 , uXincrement = 0.005f, uYincrement = 0.0005f;
+    unsigned int vao , vbo , uniformModel, uniformColor;
+    float uXoffset = 0.0f , uXincrement = 0.005f;
     bool direction = true;
 
     /* Initialize the library */
@@ -134,9 +134,10 @@ int main()
     CreateTriangle(vbo, vao);
     unsigned int shaders = CompileProgram();
 
-    uXtranslation = glGetUniformLocation( shaders , "xTranslation" );
-    uYtranslation = glGetUniformLocation( shaders , "yTranslation" );
+    uniformModel = glGetUniformLocation( shaders , "model" );
+    uniformColor = glGetUniformLocation( shaders , "colorrgb" );
 
+    glm::vec3 color{ 255.0f , 0.0f , 0.0f };
 
     /* Loop until the user closes the window */
     while ( !glfwWindowShouldClose( window ) )
@@ -144,29 +145,42 @@ int main()
         /* Poll for and process events */
         glfwPollEvents();
 
-        if ( direction )
-            uXoffset += uXincrement;
-        else
-            uXoffset -= uXincrement;
+        uXoffset += ( direction ) ? uXincrement : -uXincrement;
 
-        if ( direction )
-            uYoffset += uYincrement;
-        else
-            uYoffset -= uYincrement;
-
-        if ( abs( uXoffset ) > 0.7f ) {
+        if ( abs( uXoffset ) > 0.7f )
             direction = !direction;
-            uYincrement = (float)( rand() % 5) / 1000;
-            printf( "%f\n" , uYincrement );
-        }
 
-        /* Render here */
+        if ( color[ 0 ] > 0 && color[ 2 ] == 0 ) {
+            color[ 0 ]--;
+            color[ 1 ]++;
+        }
+        else
+            if ( color[ 1 ] > 0 && color[ 0 ] == 0 ) {
+                color[ 1 ]--;
+                color[ 2 ]++;
+            }
+            else
+                if ( color[ 2 ] > 0 && color[ 1 ] == 0 ) {
+                    color[ 0 ]++;
+                    color[ 2 ]--;
+                }
+        color[ 0 ] /= 255.0f;
+        color[ 1 ] /= 255.0f;
+        color[ 2 ] /= 255.0f;
+
         glClear( GL_COLOR_BUFFER_BIT );
 
         glUseProgram( shaders );
 
-        glUniform1f( uXtranslation , uXoffset );
-        glUniform1f( uYtranslation , uYoffset );
+        glm::mat4 model(1.0f);
+        model = glm::translate( model , glm::vec3( uXoffset , uXoffset , 0.0f ) );
+
+        glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( model ) );
+        glUniform3fv( uniformColor , 1, glm::value_ptr(color));
+
+        color[ 0 ] *= 255.0f;
+        color[ 1 ] *= 255.0f;
+        color[ 2 ] *= 255.0f;
 
         glBindVertexArray( vao );
         glDrawArrays( GL_TRIANGLES , 0 , 3 );
@@ -174,7 +188,6 @@ int main()
 
         glUseProgram( 0 );
 
-        /* Swap front and back buffers */
         glfwSwapBuffers( window );
 
     }

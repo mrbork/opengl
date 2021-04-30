@@ -2,10 +2,9 @@
 
 layout (location = 0) in vec3 position;
 
-uniform float xTranslation;
-uniform float yTranslation;
+uniform mat4 model;
 
 void main()
 {
-   gl_Position = vec4( position.x + xTranslation , position.y + yTranslation , position.z, 1.0 );
+   gl_Position = model * vec4( position.x , position.y , position.z, 1.0 );
 }
