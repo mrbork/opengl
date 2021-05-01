@@ -7,6 +7,7 @@
 #include <GLM/gtc/matrix_transform.hpp>
 #include <GLM/gtc/type_ptr.hpp>
 
+const float toRadians = 3.141592653589f / 180.0f;
 
 void CreateTriangle(unsigned int& vao, unsigned int& vbo) {
 
@@ -103,7 +104,7 @@ unsigned int CompileProgram() {
 int main()
 {
     unsigned int vao , vbo , uniformModel, uniformColor;
-    float uXoffset = 0.0f , uXincrement = 0.005f;
+    float uXoffset = 0.0f , uXincrement = 0.0025f;
     bool direction = true;
 
     /* Initialize the library */
@@ -114,7 +115,7 @@ int main()
     }
 
     /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow* window = glfwCreateWindow( 640 , 480 , "OpenGL" , NULL , NULL );
+    GLFWwindow* window = glfwCreateWindow( 700 , 500 , "OpenGL" , NULL , NULL );
     if ( !window )
     {
         glfwTerminate();
@@ -138,6 +139,7 @@ int main()
     uniformColor = glGetUniformLocation( shaders , "colorrgb" );
 
     glm::vec3 color{ 255.0f , 0.0f , 0.0f };
+    float counter = 0;
 
     /* Loop until the user closes the window */
     while ( !glfwWindowShouldClose( window ) )
@@ -146,8 +148,9 @@ int main()
         glfwPollEvents();
 
         uXoffset += ( direction ) ? uXincrement : -uXincrement;
+        counter++;
 
-        if ( abs( uXoffset ) > 0.7f )
+        if ( abs( uXoffset ) > 0.9f )
             direction = !direction;
 
         if ( color[ 0 ] > 0 && color[ 2 ] == 0 ) {
@@ -172,10 +175,13 @@ int main()
 
         glUseProgram( shaders );
 
-        glm::mat4 model(1.0f);
-        model = glm::translate( model , glm::vec3( uXoffset , uXoffset , 0.0f ) );
 
-        glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( model ) );
+        glm::mat4 transformMatrix(1.0f);
+        transformMatrix = glm::translate( transformMatrix , glm::vec3( uXoffset , uXoffset , 0.0f ) );
+        transformMatrix = glm::rotate( transformMatrix , counter * toRadians , glm::vec3( 3.0f , 5.0f , 2.0f) );
+        transformMatrix = glm::scale(transformMatrix, glm::vec3(uXoffset, uXoffset, 1.0f));
+
+        glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
         glUniform3fv( uniformColor , 1, glm::value_ptr(color));
 
         color[ 0 ] *= 255.0f;
