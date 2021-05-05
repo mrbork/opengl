@@ -7,29 +7,45 @@
 #include <GLM/gtc/matrix_transform.hpp>
 #include <GLM/gtc/type_ptr.hpp>
 
-const float toRadians = 3.141592653589f / 180.0f;
+#define toRadians 3.141592653589f / 180.0f
 
-void CreateTriangle(unsigned int& vao, unsigned int& vbo) {
+void CreateTriangle(unsigned int& vao, unsigned int& vbo, unsigned int& ibo) {
+
+    unsigned int indices[]{
+        0, 1, 2,
+        3, 2, 1,
+        3, 2, 0,
+        3, 0, 1
+    };
 
     float vertices[] {
-        -0.5f,-0.5f,
-         0.5f,-0.5f,
-         0.0f, 0.5f
+        -0.5f,-0.5f, 0.0f, //Left
+         0.5f,-0.5f, 0.0f, //Right
+         0.0f, 0.5f, 0.0f, //Top
+         0.0f, 0.0f, 0.5f  //Depth
     };
 
     glGenVertexArrays( 1 , &vao );
     glBindVertexArray( vao );
 
+    glGenBuffers(1, &ibo);
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , ibo );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER , sizeof(indices), indices , GL_STATIC_DRAW );
+
     glGenBuffers( 1 , &vbo );
     glBindBuffer( GL_ARRAY_BUFFER , vbo );
     glBufferData( GL_ARRAY_BUFFER , sizeof(vertices), vertices, GL_STATIC_DRAW );
     
-    glVertexAttribPointer( 0 , 2 , GL_FLOAT , GL_FALSE , 0 , 0 );
-    glEnableVertexAttribArray( 0 );
+    glVertexAttribPointer( 0 , 3 , GL_FLOAT , GL_FALSE , 0 , 0 );
+    glEnableVertexAttribArray( 0 ); 
 
     //Unbind
     glBindBuffer( GL_ARRAY_BUFFER , 0 );
+
     glBindVertexArray( 0 );
+
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , 0 );
+
 }
 
 unsigned int CompileShader(unsigned int type, const std::string& src) {
@@ -103,7 +119,7 @@ unsigned int CompileProgram() {
 
 int main()
 {
-    unsigned int vao , vbo , uniformModel, uniformColor;
+    unsigned int vao , vbo , ibo , uniformModel , uniformColor;
     float uXoffset = 0.0f , uXincrement = 0.0025f;
     bool direction = true;
 
@@ -132,14 +148,13 @@ int main()
 
     printf( "%s\n" , glGetString( GL_VERSION ) );
 
-    CreateTriangle(vbo, vao);
+    glEnable( GL_DEPTH_TEST );
+
+    CreateTriangle(vao, vbo, ibo);
     unsigned int shaders = CompileProgram();
 
     uniformModel = glGetUniformLocation( shaders , "model" );
-    uniformColor = glGetUniformLocation( shaders , "colorrgb" );
 
-    glm::vec3 color{ 255.0f , 0.0f , 0.0f };
-    float counter = 0;
 
     /* Loop until the user closes the window */
     while ( !glfwWindowShouldClose( window ) )
@@ -148,51 +163,36 @@ int main()
         glfwPollEvents();
 
         uXoffset += ( direction ) ? uXincrement : -uXincrement;
-        counter++;
 
-        if ( abs( uXoffset ) > 0.9f )
-            direction = !direction;
+       /* if ( abs( uXoffset ) > 0.9f )
+            direction = !direction;*/
 
-        if ( color[ 0 ] > 0 && color[ 2 ] == 0 ) {
-            color[ 0 ]--;
-            color[ 1 ]++;
-        }
-        else
-            if ( color[ 1 ] > 0 && color[ 0 ] == 0 ) {
-                color[ 1 ]--;
-                color[ 2 ]++;
-            }
-            else
-                if ( color[ 2 ] > 0 && color[ 1 ] == 0 ) {
-                    color[ 0 ]++;
-                    color[ 2 ]--;
-                }
-        color[ 0 ] /= 255.0f;
-        color[ 1 ] /= 255.0f;
-        color[ 2 ] /= 255.0f;
-
-        glClear( GL_COLOR_BUFFER_BIT );
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram( shaders );
 
-
         glm::mat4 transformMatrix(1.0f);
-        transformMatrix = glm::translate( transformMatrix , glm::vec3( uXoffset , uXoffset , 0.0f ) );
-        transformMatrix = glm::rotate( transformMatrix , counter * toRadians , glm::vec3( 3.0f , 5.0f , 2.0f) );
-        transformMatrix = glm::scale(transformMatrix, glm::vec3(uXoffset, uXoffset, 1.0f));
+        //transformMatrix = glm::translate( transformMatrix , glm::vec3( uXoffset , uXoffset , 0.0f ) );
+        transformMatrix = glm::rotate(transformMatrix, uXoffset * 100.f * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+        //transformMatrix = glm::scale(transformMatrix, glm::vec3(uXoffset, uXoffset, 1.0f));
 
         glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
-        glUniform3fv( uniformColor , 1, glm::value_ptr(color));
-
-        color[ 0 ] *= 255.0f;
-        color[ 1 ] *= 255.0f;
-        color[ 2 ] *= 255.0f;
 
         glBindVertexArray( vao );
-        glDrawArrays( GL_TRIANGLES , 0 , 3 );
+
+        /* Draw */
+        glDrawElements( GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+
         glBindVertexArray( 0 );
 
         glUseProgram( 0 );
+
+        GLenum err;
+        while ( ( err = glGetError() ) != GL_NO_ERROR )
+        {
+            //printf( "OpenGL Error: %d\n" , err );
+            std::cout << std::hex << "OpenGL Error: 0x" << err << std::endl;
+        }
 
         glfwSwapBuffers( window );
 

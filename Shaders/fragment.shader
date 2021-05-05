@@ -2,9 +2,9 @@
 
 layout (location = 0) out vec4 gl_FragColor;
 
-uniform vec3 colorrgb;
+in vec4 vertexColor;
 
 void main()
 {
-   gl_FragColor = vec4( colorrgb[0], colorrgb[ 1 ] , colorrgb[ 2 ] , 1.0f);
+   gl_FragColor = vertexColor;
 }
