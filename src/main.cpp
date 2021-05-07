@@ -1,15 +1,27 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <vector>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <GLM/gtc/matrix_transform.hpp>
 #include <GLM/gtc/type_ptr.hpp>
 
+#include "Mesh.h"
+
 #define toRadians 3.141592653589f / 180.0f
 
-void CreateTriangle(unsigned int& vao, unsigned int& vbo, unsigned int& ibo) {
+std::vector<Mesh*> meshList;
+
+void CreateTriangle() {
+
+    float vertices[] {
+        -0.5f,-0.5f, 0.0f, //Left
+         0.5f,-0.5f, 0.0f, //Right
+         0.0f, 0.5f, 0.0f, //Top
+         0.0f, 0.0f, 0.5f  //Z
+    };
 
     unsigned int indices[]{
         0, 1, 2,
@@ -18,33 +30,14 @@ void CreateTriangle(unsigned int& vao, unsigned int& vbo, unsigned int& ibo) {
         3, 0, 1
     };
 
-    float vertices[] {
-        -0.5f,-0.5f, 0.0f, //Left
-         0.5f,-0.5f, 0.0f, //Right
-         0.0f, 0.5f, 0.0f, //Top
-         0.0f, 0.0f, 0.5f  //Depth
-    };
+    Mesh* object1 = new Mesh();
+    object1->CreateMesh( vertices , sizeof( vertices ) / sizeof( float ) , indices , sizeof( indices ) / sizeof( unsigned ) );
 
-    glGenVertexArrays( 1 , &vao );
-    glBindVertexArray( vao );
+    Mesh* object2 = new Mesh();
+    object2->CreateMesh( vertices , sizeof( vertices ) / sizeof( float ) , indices , sizeof( indices ) / sizeof( unsigned ) );
 
-    glGenBuffers(1, &ibo);
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , ibo );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER , sizeof(indices), indices , GL_STATIC_DRAW );
-
-    glGenBuffers( 1 , &vbo );
-    glBindBuffer( GL_ARRAY_BUFFER , vbo );
-    glBufferData( GL_ARRAY_BUFFER , sizeof(vertices), vertices, GL_STATIC_DRAW );
-    
-    glVertexAttribPointer( 0 , 3 , GL_FLOAT , GL_FALSE , 0 , 0 );
-    glEnableVertexAttribArray( 0 ); 
-
-    //Unbind
-    glBindBuffer( GL_ARRAY_BUFFER , 0 );
-
-    glBindVertexArray( 0 );
-
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , 0 );
+    meshList.push_back( object1 );
+    meshList.push_back( object2 );
 
 }
 
@@ -119,8 +112,8 @@ unsigned int CompileProgram() {
 
 int main()
 {
-    unsigned int vao , vbo , ibo , uniformModel , uniformColor;
-    float uXoffset = 0.0f , uXincrement = 0.0025f;
+    unsigned int uniformModel , uniformProjection;
+    float uXoffset = 0.0f;
     bool direction = true;
 
     /* Initialize the library */
@@ -150,10 +143,13 @@ int main()
 
     glEnable( GL_DEPTH_TEST );
 
-    CreateTriangle(vao, vbo, ibo);
+    CreateTriangle();
     unsigned int shaders = CompileProgram();
 
     uniformModel = glGetUniformLocation( shaders , "model" );
+    uniformProjection = glGetUniformLocation( shaders , "projection" );
+
+    glm::mat4 projectionMatrix = glm::perspective( 90.0f , 700.0f / 500.0f , 0.1f , 100.0f );
 
 
     /* Loop until the user closes the window */
@@ -162,31 +158,33 @@ int main()
         /* Poll for and process events */
         glfwPollEvents();
 
-        uXoffset += ( direction ) ? uXincrement : -uXincrement;
+        uXoffset += ( direction ) ? 0.0025f : -0.0025f;
 
-       /* if ( abs( uXoffset ) > 0.9f )
-            direction = !direction;*/
+        if ( abs( uXoffset ) > 0.9f )
+            direction = !direction;
 
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram( shaders );
 
+        /*Transformations*/
         glm::mat4 transformMatrix(1.0f);
-        //transformMatrix = glm::translate( transformMatrix , glm::vec3( uXoffset , uXoffset , 0.0f ) );
-        transformMatrix = glm::rotate(transformMatrix, uXoffset * 100.f * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+        transformMatrix = glm::translate( transformMatrix , glm::vec3( uXoffset , 0.0f , -1.0f ) );
+        //transformMatrix = glm::rotate(transformMatrix, uXoffset * 100.f * toRadians, glm::vec3(0.0f, 0.0f, 0.0f));
         //transformMatrix = glm::scale(transformMatrix, glm::vec3(uXoffset, uXoffset, 1.0f));
+        
 
+        /*Uniforms*/
         glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
+        glUniformMatrix4fv( uniformProjection , 1 , GL_FALSE , glm::value_ptr( projectionMatrix ) );
 
-        glBindVertexArray( vao );
 
-        /* Draw */
-        glDrawElements( GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
-
-        glBindVertexArray( 0 );
+        meshList[ 0 ]->RenderMesh();
+        meshList[ 1 ]->RenderMesh();
 
         glUseProgram( 0 );
 
+        /*Check for Errors*/
         GLenum err;
         while ( ( err = glGetError() ) != GL_NO_ERROR )
         {
@@ -198,6 +196,8 @@ int main()
 
     }
 
+    meshList[ 0 ]->ClearMesh();
+    meshList[ 1 ]->ClearMesh();
     glDeleteProgram( shaders );
     glfwTerminate();
 
