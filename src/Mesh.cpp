@@ -31,7 +31,7 @@ void Mesh::RenderMesh()
 {
     glBindVertexArray( vao );
 
-    /* Draw */
+    /*Draw*/
     glDrawElements( GL_TRIANGLES , uIndices , GL_UNSIGNED_INT , 0 );
 
     glBindVertexArray( 0 );
