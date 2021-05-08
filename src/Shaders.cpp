@@ -16,12 +16,12 @@ unsigned int Shaders::CompileShader( unsigned int type , const std::string& src 
     glCompileShader( shader );
 
     int result;
-    char message[ 1024 ];
+    char message[ 512 ];
 
     glGetShaderiv( shader , GL_COMPILE_STATUS , &result );
     if ( !result )
     {
-        glGetShaderInfoLog( shader , 1024 , NULL , message );
+        glGetShaderInfoLog( shader , 512 , NULL , message );
         printf( "Failed to compile the %d shader\n %s\n" , type , message );
         return 0;
     }
@@ -55,13 +55,13 @@ void Shaders::CompileProgram()
     glAttachShader( program , fragmentShader );
 
     int result;
-    char message[ 1024 ];
+    char message[ 512 ];
 
     glLinkProgram( program );
     glGetProgramiv( program , GL_LINK_STATUS , &result );
     if ( !result )
     {
-        glGetProgramInfoLog( program , 1024 , NULL , message );
+        glGetProgramInfoLog( program , 512 , NULL , message );
         printf( "Failed to link program: %s\n" , message );
         return;
     }
@@ -70,13 +70,16 @@ void Shaders::CompileProgram()
     glGetProgramiv( program , GL_VALIDATE_STATUS , &result );
     if ( !result )
     {
-        glGetProgramInfoLog( program , 1024 , NULL , message );
+        glGetProgramInfoLog( program , 512 , NULL , message );
         printf( "Failed to validate program: %s\n" , message );
         return;
     }
 
     glDetachShader( program , vertexShader );
     glDetachShader( program , fragmentShader );
+
+    glDeleteShader( vertexShader );
+    glDeleteShader( fragmentShader );
 
 }
 

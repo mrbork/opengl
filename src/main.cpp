@@ -57,13 +57,15 @@ int main()
     uniformModel = glGetUniformLocation( shaderlist[0].GetProgram() , "model" );
     uniformProjection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "projection" );
 
-    glm::mat4 projectionMatrix = glm::perspective(90.0f , 700.0f / 500.0f , 0.1f , 100.0f );
+    glm::mat4 projectionMatrix = glm::perspective(90.0f , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
 
 
     while ( !mainWindow.ShouldClose() )
     {
         /* Poll for and process events */
         glfwPollEvents();
+
+        
 
         glClearColor( 0.15f , 0.17f , 0.20f , 1.0f );
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -99,8 +101,6 @@ int main()
     meshlist[ 0 ]->ClearMesh();
     meshlist[ 1 ]->ClearMesh();
     shaderlist[ 0 ].ClearShader();
-    
-    mainWindow.Clear();
 
     return 0;
 }

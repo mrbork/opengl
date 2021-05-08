@@ -12,6 +12,67 @@ glWindow::glWindow( unsigned int width, unsigned int height)
     bufferHeight = height;
 }
 
+glWindow::~glWindow()
+{
+    glfwDestroyWindow( mainWindow );
+    glfwTerminate();
+}
+
+void glWindow::HandleInput( GLFWwindow* window , int key , int scancode , int action , int mods )
+{
+    if ( key < 0 || key > 1024 )
+        return;
+
+    glWindow* MainWindow = static_cast< glWindow* >( glfwGetWindowUserPointer( window ) );
+    
+    if ( key == GLFW_KEY_ESCAPE && action == GLFW_PRESS )
+        glfwSetWindowShouldClose( window , GL_TRUE );
+
+    if ( action == GLFW_PRESS )
+        MainWindow->keys[ key ] = true;
+    else
+        MainWindow->keys[ key ] = false;
+}
+
+void glWindow::HandeCursor( GLFWwindow* window , double xPos , double yPos )
+{
+    glWindow* MainWindow = static_cast< glWindow* >( glfwGetWindowUserPointer( window ) );
+
+    if ( MainWindow->firstMove )
+    {
+        MainWindow->lastx = xPos;
+        MainWindow->lasty = yPos;
+        MainWindow->firstMove = false;
+    }
+
+    MainWindow->deltax = xPos - MainWindow->lastx;
+    MainWindow->deltay = MainWindow->lasty - yPos;
+
+    MainWindow->lastx = xPos;
+    MainWindow->lasty = yPos;
+
+}
+
+void glWindow::CreateCallbacks()
+{
+    glfwSetKeyCallback( mainWindow , HandleInput );
+    glfwSetCursorPosCallback( mainWindow , HandeCursor );
+}
+
+GLfloat glWindow::GetDeltaX()
+{
+    float delta = deltax;
+    deltax = 0;
+    return delta;
+}
+
+GLfloat glWindow::GetDeltaY()
+{
+    float delta = deltay;
+    deltay = 0;
+    return delta;
+}
+
 void glWindow::Initialize()
 {
     /* Initialize the library */
@@ -32,6 +93,12 @@ void glWindow::Initialize()
     /* Make the window's context current */
     glfwMakeContextCurrent( mainWindow );
 
+    /*Handle inputs*/
+    CreateCallbacks();
+    
+    /*Hide cursor and set it to origin*/
+    glfwSetInputMode( mainWindow , GLFW_CURSOR , GLFW_CURSOR_DISABLED );
+
     glewExperimental = GL_TRUE;
 
     if ( glewInit() != GLEW_OK )
@@ -40,5 +107,9 @@ void glWindow::Initialize()
     printf( "%s\n" , glGetString( GL_VERSION ) );
 
     glEnable( GL_DEPTH_TEST );
+
+    glViewport( 0 , 0 , bufferWidth , bufferHeight );
+
+    glfwSetWindowUserPointer( mainWindow , this );
 
 }
