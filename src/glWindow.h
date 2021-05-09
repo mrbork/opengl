@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#include <GLM/glm.hpp>
+
 class glWindow
 {
 public:
@@ -19,8 +21,9 @@ public:
 	GLfloat GetBufferHeight() { return bufferHeight; }
 	GLfloat GetDeltaX();
 	GLfloat GetDeltaY();
+	GLfloat GetFov() { return fov; }
 	
-	int* GetKeys() { return keys; }
+	bool* GetKeys() { return keys; }
 
 
 private:
@@ -33,11 +36,14 @@ private:
 	float deltax , deltay;
 	bool firstMove;
 
-	int keys[ 1024 ] = { 0 };
+	float fov;
+
+	bool keys[ 1024 ] = { 0 };
 
 	void CreateCallbacks();
 
 	static void HandleInput( GLFWwindow* window , int key , int scancode , int action , int mods );
 	static void HandeCursor( GLFWwindow* window , double xPos , double yPos );
+	static void HandleScroll( GLFWwindow* window , double xoffset , double yoffset );
 };
 

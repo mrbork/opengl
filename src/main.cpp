@@ -10,12 +10,12 @@
 #include "Mesh.h"
 #include "Shaders.h"
 #include "glWindow.h" 
-
-#define toRadians 3.141592653589f / 180.0f
+#include "Camera.h"
 
 std::vector<Mesh*> meshlist;
 std::vector<Shaders> shaderlist;
 glWindow mainWindow;
+Camera camera;
 
 void CreateTriangle() {
 
@@ -23,7 +23,7 @@ void CreateTriangle() {
         -0.5f,-0.5f, 0.0f, //Left
          0.5f,-0.5f, 0.0f, //Right
          0.0f, 0.5f, 0.0f, //Top
-         0.0f, 0.0f, 0.5f  //Z
+         0.0f, 0.0f, 1.0f  //Z
     };
 
     unsigned int indices[]{
@@ -48,43 +48,59 @@ int main()
 {
     mainWindow.Initialize();
 
-    unsigned int uniformModel , uniformProjection;
+    unsigned int uniformModel , uniformProjection, uniformView;
     shaderlist.push_back( Shaders() );
 
     CreateTriangle();
     shaderlist[ 0 ].CompileProgram();
 
+    camera = Camera( glm::vec3( 0.f , 0.5f , 1.0f ) , glm::vec3( 0.f , 1.f , 0.f ) , -90.f , 0.f , 2.f , .5f );
+
     uniformModel = glGetUniformLocation( shaderlist[0].GetProgram() , "model" );
     uniformProjection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "projection" );
+    uniformView = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "view" );
 
-    glm::mat4 projectionMatrix = glm::perspective(90.0f , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
+    float deltaTime;
+    float lastTime = 0;
 
+    float rotation = 0.0f;
 
     while ( !mainWindow.ShouldClose() )
     {
+        float now = glfwGetTime();
+        deltaTime = now - lastTime;
+        lastTime = now;
+
+        rotation++;
+        
         /* Poll for and process events */
         glfwPollEvents();
 
-        
+        camera.KeyControl( mainWindow.GetKeys() , deltaTime );
+        camera.MouseControl( mainWindow.GetDeltaX() , mainWindow.GetDeltaY() );
 
         glClearColor( 0.15f , 0.17f , 0.20f , 1.0f );
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shaderlist[ 0 ].UseShader();
-        
+
+        glm::mat4 projectionMatrix = glm::perspective( glm::radians( mainWindow.GetFov() ) , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
         glUniformMatrix4fv( uniformProjection , 1 , GL_FALSE , glm::value_ptr( projectionMatrix ) );
+        glUniformMatrix4fv( uniformView , 1 , GL_FALSE , glm::value_ptr( camera.CalculateViewMatrix() ));
 
 
         /*Transformation*/
         glm::mat4 transformMatrix( 1.0f );
         transformMatrix = glm::translate( transformMatrix , glm::vec3( 0.0f , 0.0f , -1.0f ) );
+        transformMatrix = glm::rotate( transformMatrix , glm::radians(rotation) , glm::vec3( 1.0f , 1.0f , 1.0f ) );
         glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
 
         meshlist[ 0 ]->RenderMesh();
 
 
         transformMatrix = glm::mat4(1.0f);
-        transformMatrix = glm::translate( transformMatrix , glm::vec3( 0.0f , 1.0f , -1.0f ) );
+        transformMatrix = glm::translate( transformMatrix , glm::vec3( 0.0f , 1.5f , -1.0f ) );
+        transformMatrix = glm::rotate( transformMatrix , glm::radians( rotation ) , glm::vec3( 0.0f , 1.0f , 0.0f ) );
         glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
 
         meshlist[ 1 ]->RenderMesh();

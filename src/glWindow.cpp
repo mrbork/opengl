@@ -2,14 +2,22 @@
 
 glWindow::glWindow()
 {
-    bufferWidth = 700;
-    bufferHeight = 500;
+    bufferWidth = 800;
+    bufferHeight = 600;
+    deltax = 0;
+    deltay = 0;
+    firstMove = true;
+    fov = 70.0f;
 }
 
 glWindow::glWindow( unsigned int width, unsigned int height)
 {
     bufferWidth = width;
     bufferHeight = height;
+    deltax = 0;
+    deltay = 0;
+    firstMove = true;
+    fov = 70.0f;
 }
 
 glWindow::~glWindow()
@@ -30,7 +38,7 @@ void glWindow::HandleInput( GLFWwindow* window , int key , int scancode , int ac
 
     if ( action == GLFW_PRESS )
         MainWindow->keys[ key ] = true;
-    else
+    if (action == GLFW_RELEASE )
         MainWindow->keys[ key ] = false;
 }
 
@@ -53,10 +61,19 @@ void glWindow::HandeCursor( GLFWwindow* window , double xPos , double yPos )
 
 }
 
+void glWindow::HandleScroll( GLFWwindow* window , double xoffset , double yoffset )
+{
+    glWindow* MainWindow = static_cast< glWindow* >( glfwGetWindowUserPointer(window) );
+
+    MainWindow->fov -= (float)yoffset * 2;
+    MainWindow->fov = glm::clamp( MainWindow->fov , 20.0f , 70.0f );
+}
+
 void glWindow::CreateCallbacks()
 {
     glfwSetKeyCallback( mainWindow , HandleInput );
     glfwSetCursorPosCallback( mainWindow , HandeCursor );
+    glfwSetScrollCallback( mainWindow , HandleScroll );
 }
 
 GLfloat glWindow::GetDeltaX()
