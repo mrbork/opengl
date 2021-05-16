@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -16,11 +18,14 @@
 #include "Shaders.h"
 #include "glWindow.h" 
 #include "Camera.h"
+#include "Texture.h"
 
 std::vector<Mesh*> meshlist;
 std::vector<Shaders> shaderlist;
 glWindow mainWindow;
 Camera camera;
+
+Texture texture;
 
 void RenderMeshes( std::vector<Mesh*>& meshlist )
 {
@@ -37,10 +42,10 @@ void ClearMeshes( std::vector<Mesh*>& meshlist )
 void CreateTriangle() {
 
     float vertices[] {
-       -0.5f,-0.5f, 0.0f, // Left
-        0.5f,-0.5f, 0.0f, // Right
-        0.0f, 0.5f, 0.0f, // Top
-        0.0f, 0.0f, 1.0f  // Back Z
+       -1.0f,-1.0f, 0.0f, 0.0f, 0.0f, // Left
+        1.0f,-1.0f, 0.0f, 1.0f, 0.0f, // Right
+        0.0f, 1.0f, 0.0f, 0.5f, 1.0f, // Top
+        0.0f,-1.0f, 1.0f, 0.5f, 0.0f  // Back Z
     };
 
     unsigned int indices[]{
@@ -50,14 +55,11 @@ void CreateTriangle() {
         3, 0, 1  // Bottom
     };
 
-    for ( int i = 0; i < 4; i++ )
+    for ( int i = 0; i < 1; i++ )
     {
         Mesh* obj = new Mesh();
 
-        for ( int j = 0; j < 10; j += 3 )
-            vertices[ j ]++;
-
-        obj->CreateMesh( vertices , sizeof( vertices ) / sizeof( float ) , indices , sizeof( indices ) / sizeof( unsigned ) );
+        obj->CreateMesh( vertices , 20 , indices , 12 );
         meshlist.push_back( obj );
     }
 
@@ -84,6 +86,9 @@ int main()
     shaderlist[ 0 ].CompileProgram();
 
     camera = Camera( glm::vec3( 0.f , 0.5f , 1.0f ) , glm::vec3( 0.f , 1.f , 0.f ) , -90.f , 0.f , 5.f , .5f );
+
+    texture = Texture( "Textures/brick.png" );
+    texture.Load();
 
     uniformModel = glGetUniformLocation( shaderlist[0].GetProgram() , "transformation" );
     uniformProjection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "projection" );
@@ -129,6 +134,10 @@ int main()
         ImGui::Begin( (const char*)glGetString( GL_RENDERER ) , NULL, ImGuiWindowFlags_AlwaysAutoResize |  ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         ImGui::Text( "Delta Time: %.3f ms (%.1f FPS)" , 1000.0f * ImGui::GetIO().DeltaTime , ImGui::GetIO().Framerate );
         ImGui::NewLine();
+        ImGui::Text( "Pitch: %.1f" , camera.GetViewAnglesY() );
+        ImGui::Text( "Yaw: %.1f" , camera.GetViewAnglesX() );
+        ImGui::Text( "Zoom: %.f" , mainWindow.GetFov() );
+        ImGui::NewLine();
         ImGui::SliderFloat3( "Translation" , translation , -10.0f , 10.0f , "%.2f" );
         ImGui::NewLine();
         if ( ImGui::Button( toggle.c_str() ) )
@@ -139,6 +148,7 @@ int main()
 
         /*Use Shaders*/
         shaderlist[ 0 ].UseShader();
+        texture.Use();
 
         glm::mat4 projectionMatrix = glm::perspective( glm::radians( mainWindow.GetFov() ) , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
         glUniformMatrix4fv( uniformProjection , 1 , GL_FALSE , glm::value_ptr( projectionMatrix ) );
