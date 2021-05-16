@@ -13,7 +13,10 @@ public:
 	glm::mat4 CalculateViewMatrix();
 
 	void KeyControl( bool* keys , float deltaTime);
-	void MouseControl( float deltaX , float deltaY );
+	void MouseControl( float deltaX , float deltaY , bool rightMouse);
+
+	float GetViewAnglesX() { return yaw; }
+	float GetViewAnglesY() { return pitch; }
 
 private:
 	glm::vec3 position;

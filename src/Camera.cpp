@@ -8,7 +8,7 @@ Camera::Camera()
 	pitch = 0.0f;
 	front = glm::vec3( 0.f , 0.f , -1.f );
 
-	move = 1.0f;
+	move = 5.0f;
 	turn = 0.5f;
 
 	right = glm::vec3( 0.0f , 0.0f , 0.0f );
@@ -38,9 +38,9 @@ void Camera::KeyControl( bool* keys , float deltaTime )
 {
 
 	if ( keys[ GLFW_KEY_LEFT_SHIFT ] )
-		move = 4;
+		move = 10;
 	else
-		move = 1;
+		move = 5;
 
 	float velocity = move * deltaTime;
 
@@ -53,14 +53,17 @@ void Camera::KeyControl( bool* keys , float deltaTime )
 	if ( keys[ GLFW_KEY_D ] )
 		position += right * velocity;
 	if ( keys[ GLFW_KEY_SPACE ] )
-		position += up * velocity;
+		position += worldUp * velocity;
 	if ( keys[ GLFW_KEY_LEFT_CONTROL ] )
-		position -= up * velocity;
+		position -= worldUp * velocity;
 
 }
 
-void Camera::MouseControl( float deltaX , float deltaY )
+void Camera::MouseControl( float deltaX , float deltaY , bool rightMouse)
 {
+	if ( !rightMouse )
+		return;
+
 	deltaX *= turn;
 	deltaY *= turn;
 
@@ -70,7 +73,6 @@ void Camera::MouseControl( float deltaX , float deltaY )
 	pitch = glm::clamp( pitch , -89.f , 89.f );
 
 	Update();
-
 }
 
 void Camera::Update()
