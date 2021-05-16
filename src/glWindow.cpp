@@ -2,8 +2,8 @@
 
 glWindow::glWindow()
 {
-    bufferWidth = 800;
-    bufferHeight = 600;
+    bufferWidth = 1000;
+    bufferHeight = 770;
     deltax = 0;
     deltay = 0;
     firstMove = true;
@@ -28,7 +28,7 @@ glWindow::~glWindow()
 
 void glWindow::HandleInput( GLFWwindow* window , int key , int scancode , int action , int mods )
 {
-    if ( key < 0 || key > 1024 )
+    if ( key < 0 || key >= 1024 )
         return;
 
     glWindow* MainWindow = static_cast< glWindow* >( glfwGetWindowUserPointer( window ) );
@@ -69,11 +69,35 @@ void glWindow::HandleScroll( GLFWwindow* window , double xoffset , double yoffse
     MainWindow->fov = glm::clamp( MainWindow->fov , 20.0f , 70.0f );
 }
 
+void glWindow::HandleButton( GLFWwindow* window , int button , int action , int mods )
+{
+    if ( button < 0 || button >= 8 )
+        return;
+
+    glWindow* MainWindow = static_cast< glWindow* >( glfwGetWindowUserPointer( window ) );
+
+    if ( button == GLFW_MOUSE_BUTTON_2 && action == GLFW_PRESS )
+    {
+        glfwSetInputMode( MainWindow->mainWindow , GLFW_CURSOR , GLFW_CURSOR_DISABLED );
+        MainWindow->firstMove = true;
+    }
+    else 
+    {
+        glfwSetInputMode( MainWindow->mainWindow , GLFW_CURSOR , GLFW_CURSOR_NORMAL );
+    }
+
+    if ( action == GLFW_PRESS )
+        MainWindow->buttons[ button ] = true;
+    if ( action == GLFW_RELEASE )
+        MainWindow->buttons[ button ] = false;
+}
+
 void glWindow::CreateCallbacks()
 {
     glfwSetKeyCallback( mainWindow , HandleInput );
     glfwSetCursorPosCallback( mainWindow , HandeCursor );
     glfwSetScrollCallback( mainWindow , HandleScroll );
+    glfwSetMouseButtonCallback( mainWindow , HandleButton );
 }
 
 GLfloat glWindow::GetDeltaX()
@@ -114,7 +138,7 @@ void glWindow::Initialize()
     CreateCallbacks();
     
     /*Hide cursor and set it to origin*/
-    glfwSetInputMode( mainWindow , GLFW_CURSOR , GLFW_CURSOR_DISABLED );
+    glfwSetInputMode( mainWindow , GLFW_CURSOR , GLFW_CURSOR_NORMAL );
 
     glewExperimental = GL_TRUE;
 
@@ -129,4 +153,6 @@ void glWindow::Initialize()
 
     glfwSetWindowUserPointer( mainWindow , this );
 
+    glPolygonMode( GL_FRONT_AND_BACK , GL_FILL );
+    
 }
