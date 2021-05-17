@@ -1,10 +1,13 @@
 #version 330 core
 
-layout (location = 0) out vec4 gl_FragColor;
+out vec4 gl_FragColor;
 
 in vec4 vertexColor;
+in vec2 texelCoord;
+
+uniform sampler2D textureSampler;
 
 void main()
 {
-   gl_FragColor = vertexColor;
+   gl_FragColor = texture(textureSampler, texelCoord);
 }
