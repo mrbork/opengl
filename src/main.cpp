@@ -19,13 +19,15 @@
 #include "glWindow.h" 
 #include "Camera.h"
 #include "Texture.h"
+#include "Lighting.h"
 
 std::vector<Mesh*> meshlist;
 std::vector<Shaders> shaderlist;
+
 glWindow mainWindow;
 Camera camera;
-
 Texture texture;
+Lighting lighting;
 
 void RenderMeshes( std::vector<Mesh*>& meshlist )
 {
@@ -42,10 +44,10 @@ void ClearMeshes( std::vector<Mesh*>& meshlist )
 void CreateTriangle() {
 
     float vertices[] {
-       -1.0f,-1.0f, 0.0f, 0.0f, 0.0f, // Left
-        1.0f,-1.0f, 0.0f, 1.0f, 0.0f, // Right
-        0.0f, 1.0f, 0.0f, 0.5f, 1.0f, // Top
-        0.0f,-1.0f, 1.0f, 0.5f, 0.0f  // Back Z
+       -0.5f,-0.5f, 0.0f, 0.0f, 0.0f, // Left
+        0.5f,-0.5f, 0.0f, 1.0f, 0.0f, // Right
+        0.0f, 0.5f, 0.0f, 0.5f, 1.0f, // Top
+        0.0f,-0.5f, 0.5f, 0.5f, 0.0f  // Back Z
     };
 
     unsigned int indices[]{
@@ -79,7 +81,8 @@ int main()
     /*Setup Dear ImGui style*/
     ImGui::StyleColorsDark();
 
-    unsigned int uniformModel , uniformProjection, uniformView;
+    unsigned int uniformModel , uniformProjection, uniformView, uniformambientColor, uniformambientIntensity;
+    float intensity = 1.0f;
     shaderlist.push_back( Shaders() );
 
     CreateTriangle();
@@ -87,16 +90,22 @@ int main()
 
     camera = Camera( glm::vec3( 0.f , 0.5f , 1.0f ) , glm::vec3( 0.f , 1.f , 0.f ) , -90.f , 0.f , 5.f , .5f );
 
-    texture = Texture( "Textures/brick.png" );
+    texture = Texture( "Textures/test.jpg" );
     texture.Load();
+
+    lighting = Lighting(1.0f, 1.0f, 1.0f, intensity );
 
     uniformModel = glGetUniformLocation( shaderlist[0].GetProgram() , "transformation" );
     uniformProjection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "projection" );
     uniformView = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "view" );
+    uniformambientColor = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.color" );
+    uniformambientIntensity = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.intensity" );
+
 
     float rotation = 0.0f;
     float rotationVector[ 3 ]{ 1.0f, 0.0f , 0.0f };
     float translation[ 3 ]{ 0.0f, 0.0f , -1.0f };
+    float ambientColor[ 3 ]{ 1.0f, 1.0f, 1.0f };
     bool rotate = false;
     std::string toggle = "Start";
 
@@ -138,17 +147,24 @@ int main()
         ImGui::Text( "Yaw: %.1f" , camera.GetViewAnglesX() );
         ImGui::Text( "Zoom: %.f" , mainWindow.GetFov() );
         ImGui::NewLine();
-        ImGui::SliderFloat3( "Translation" , translation , -10.0f , 10.0f , "%.2f" );
+        ImGui::Text( "Lighting" );
+        ImGui::SliderFloat( "Ambient Intensity" , &intensity , 0.0f , 1.0f );
+        ImGui::SliderFloat3( "Ambient Color" , ambientColor , 0.0f , 1.0f , "%.1f" );
         ImGui::NewLine();
+        ImGui::Text( "Transformations" );
+        ImGui::SliderFloat3( "Translation" , translation , -10.0f , 10.0f , "%.2f" );
+        ImGui::SliderFloat( "Rotation" , &rotation , 0 , 360 );
+        ImGui::SameLine();
         if ( ImGui::Button( toggle.c_str() ) )
             rotate = !rotate;
-        ImGui::SliderFloat( "Rotation" , &rotation , 0 , 360 );
         ImGui::SliderFloat3( "Rotation Vector" , rotationVector , -5.0f , 5.0f , "%.1f" );
         ImGui::End();
 
         /*Use Shaders*/
         shaderlist[ 0 ].UseShader();
         texture.Use();
+        lighting.Update( glm::vec3( ambientColor[0], ambientColor[1], ambientColor[2]) , intensity );
+        lighting.Use( uniformambientColor , uniformambientIntensity );
 
         glm::mat4 projectionMatrix = glm::perspective( glm::radians( mainWindow.GetFov() ) , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
         glUniformMatrix4fv( uniformProjection , 1 , GL_FALSE , glm::value_ptr( projectionMatrix ) );

@@ -14,6 +14,6 @@ void main()
 {
 	gl_Position = projection * view * transformation * vec4( position, 1.0f );
 	vertexColor = vec4(clamp(position, 0.0f, 1.0f), 1.0f);
-
+	
 	texelCoord = texCoord;
 }

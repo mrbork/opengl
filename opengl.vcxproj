@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dependencies\IMGUI\imgui.cpp" />
+    <ClCompile Include="Dependencies\IMGUI\imgui_demo.cpp" />
     <ClCompile Include="Dependencies\IMGUI\imgui_draw.cpp" />
     <ClCompile Include="Dependencies\IMGUI\imgui_impl_glfw.cpp" />
     <ClCompile Include="Dependencies\IMGUI\imgui_impl_opengl3.cpp" />
@@ -27,6 +28,7 @@
     <ClCompile Include="Dependencies\IMGUI\imgui_widgets.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\glWindow.cpp" />
+    <ClCompile Include="src\Lighting.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Shaders.cpp" />
@@ -35,6 +37,7 @@
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\glWindow.h" />
+    <ClInclude Include="src\Lighting.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Shaders.h" />
     <ClInclude Include="src\Texture.h" />
