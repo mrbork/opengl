@@ -1,6 +1,4 @@
-#include <GL/glew.h>
-#include <iostream>
-#include <fstream>
+#include "pch.h"
 
 class Shaders
 {

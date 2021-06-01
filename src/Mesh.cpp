@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Mesh.h"
 
 void Mesh::CreateMesh( float* vertices , unsigned int numVertices , unsigned int* indices , unsigned int numIndices )
@@ -16,10 +17,12 @@ void Mesh::CreateMesh( float* vertices , unsigned int numVertices , unsigned int
     glBindBuffer( GL_ARRAY_BUFFER , vbo );
     glBufferData( GL_ARRAY_BUFFER , numVertices * sizeof(float) , vertices , GL_STATIC_DRAW );
 
-    glVertexAttribPointer( 0 , 3 , GL_FLOAT , GL_FALSE , sizeof( vertices[ 0 ] ) * 5 , 0 );
+    glVertexAttribPointer( 0 , 3 , GL_FLOAT , GL_FALSE , sizeof( vertices[ 0 ] ) * 8 , 0 );
     glEnableVertexAttribArray( 0 );
-    glVertexAttribPointer( 1 , 2 , GL_FLOAT , GL_FALSE , sizeof( vertices[ 0 ] ) * 5 , (void*)(sizeof(vertices[0 ]) * 3)    );
+    glVertexAttribPointer( 1 , 2 , GL_FLOAT , GL_FALSE , sizeof( vertices[ 0 ] ) * 8 , ( void* )( sizeof( vertices[ 0 ] ) * 3 ) );
     glEnableVertexAttribArray( 1 );
+    glVertexAttribPointer( 2 , 3 , GL_FLOAT , GL_FALSE , sizeof( vertices[ 0 ] ) * 8 , ( void* )( sizeof( vertices[ 0 ] ) * 5 ) );
+    glEnableVertexAttribArray( 2 );
 
     /*Unbind Objects*/
     glBindBuffer( GL_ARRAY_BUFFER , 0 );
