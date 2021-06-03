@@ -13,12 +13,11 @@ std::vector<Shaders> shaderlist;
 glWindow mainWindow;
 Camera camera;
 Texture texture;
-Texture texture2;
 Lighting lighting;
 
 void CalcAverageNormals( unsigned int* indices , unsigned int indicesCount , float* vertices , unsigned int verticesCount , unsigned int vertexLength , unsigned int normalOffset )
 {
-    for ( int i = 0; i < indicesCount; i += 3 )
+    for ( unsigned int i = 0; i < indicesCount; i += 3 )
     {
         unsigned int v1 = indices[i] * vertexLength;
         unsigned int v2 = indices[ i + 1 ] * vertexLength;
@@ -37,7 +36,7 @@ void CalcAverageNormals( unsigned int* indices , unsigned int indicesCount , flo
         vertices[ v3 ] += normal.x; vertices[ v3 + 1 ] += normal.y; vertices[ v3 + 2 ] += normal.z;
     }
 
-    for ( int j = 0; j < verticesCount / vertexLength; j++ )
+    for ( unsigned int j = 0; j < verticesCount / vertexLength; j++ )
     {
         unsigned int offset = j * vertexLength + normalOffset;
         glm::vec3 normalVertex( vertices[ offset ] , vertices[ offset + 1 ] , vertices[ offset + 2 ] );
@@ -58,23 +57,42 @@ void CreateTriangle() {
         0.0f,-0.5f, 0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 0.0f  // Back Z
     };
 
+    //unsigned int indices[]{
+    //    0, 1, 2, // Front
+    //    3, 2, 1, // Right
+    //    3, 2, 0, // Left
+    //    3, 0, 1  // Bottom
+    //};
+
     unsigned int indices[]{
         0, 1, 2, // Front
-        3, 2, 1, // Right
-        3, 2, 0, // Left
-        3, 0, 1  // Bottom
+        3, 1, 2, // Right
+        3, 0, 2, // Left
+        3, 1, 0  // Bottom
     };
 
     CalcAverageNormals( indices , 12 , vertices , 32 , 8 , 5 );
 
-    for ( int i = 0; i < 2; i++ )
+    for ( int i = 0; i < 2; i++)
     {
         Mesh* obj = new Mesh();
+
+        /*vertices[ 0 ]  += glm::cos( glm::radians( ( float )i ) ) * 0.1f;
+        vertices[ 8 ]  += glm::cos( glm::radians( ( float )i ) ) * 0.1f;
+        vertices[ 16 ] += glm::cos( glm::radians( ( float )i ) ) * 0.1f;
+        vertices[ 24 ] += glm::cos( glm::radians( ( float )i ) ) * 0.1f;
+
+
+        vertices[ 2 ]  += glm::sin( glm::radians( ( float )i ) ) * 0.1f;
+        vertices[ 10 ] += glm::sin( glm::radians( ( float )i ) ) * 0.1f;
+        vertices[ 18 ] += glm::sin( glm::radians( ( float )i ) ) * 0.1f;
+        vertices[ 26 ] += glm::sin( glm::radians( ( float )i ) ) * 0.1f;*/
 
         vertices[ 0 ]++;
         vertices[ 8 ]++;
         vertices[ 16 ]++;
         vertices[ 24 ]++;
+
 
         obj->CreateMesh( vertices , 32 , indices , 12 );
         meshlist.push_back( obj );
@@ -109,7 +127,7 @@ int main()
     ImGui::StyleColorsDark();
 
     unsigned int uniformModel , uniformProjection, uniformView, uniformambientColor, uniformambientIntensity, uniformDirection, uniformDiffuseIntensity;
-    float intensity = 1.0f;
+    float intensity = 0.2f;
     shaderlist.push_back( Shaders() );
 
     CreateTriangle();
@@ -117,12 +135,10 @@ int main()
 
     camera = Camera( glm::vec3( 0.f , 0.5f , 1.0f ) , glm::vec3( 0.f , 1.f , 0.f ) , -90.f , 0.f , 5.f , .5f );
 
-    texture = Texture( "Textures/1314202.jpg" );
+    texture = Texture( "Textures/3.jpg" );
     texture.Load();
-    texture2 = Texture( "Textures/test.jpg" );
-    texture2.Load();
 
-    lighting = Lighting(1.0f, 1.0f, 1.0f, intensity , 2.0f, -1.0f, -2.0f, 1.0f);
+    lighting = Lighting(1.0f, 1.0f, 1.0f, intensity , 2.0f, -2.0f, 0.0f, 1.0f);
 
     uniformModel = glGetUniformLocation( shaderlist[0].GetProgram() , "transformation" );
     uniformProjection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "projection" );
@@ -137,6 +153,7 @@ int main()
     glm::vec3 rotationVector{ 0.0f, 1.0f , 0.0f };
     glm::vec3 translation{ 0.0f, 0.0f , -1.0f };
     glm::vec3 ambientColor{ 1.0f, 1.0f, 1.0f };
+    glm::vec3 lightDirection{ 2.0f, -2.0f, 0.0f };
     bool rotate = false;
     std::string toggle = "Start";
 
@@ -151,8 +168,8 @@ int main()
 
         /*Handle Control Callbacks*/
         if ( !io.WantCaptureMouse )
-            camera.KeyControl( mainWindow.GetKeys() , ImGui::GetIO().DeltaTime );
-        camera.MouseControl( mainWindow.GetDeltaX() , mainWindow.GetDeltaY() , mainWindow.GetButtons()[ GLFW_MOUSE_BUTTON_2 ] );
+            camera.KeyControl( mainWindow.GetKeys() , ImGui::GetIO().DeltaTime , mainWindow.GetScrollDelta() );
+        camera.MouseControl( mainWindow.GetMouseDeltaX() , mainWindow.GetMouseDeltaY() , mainWindow.GetButtons()[ GLFW_MOUSE_BUTTON_2 ] );
 
 
         if ( rotate )
@@ -167,7 +184,7 @@ int main()
         {
             toggle = "Start";
         }
-        
+
         /*feed inputs to dear imgui, start new frame*/
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -180,11 +197,11 @@ int main()
             ImGui::NewLine();
             ImGui::Text( "Pitch: %.1f" , camera.GetViewAnglesY() );
             ImGui::Text( "Yaw: %.1f" , camera.GetViewAnglesX() );
-            ImGui::Text( "Zoom: %.f" , mainWindow.GetFov() );
             ImGui::NewLine();
             ImGui::Text( "Lighting" );
             ImGui::SliderFloat( "Ambient Intensity" , &intensity , 0.0f , 1.0f );
             ImGui::SliderFloat3( "Ambient Color" , &ambientColor.x , 0.0f , 1.0f , "%.1f" );
+            ImGui::SliderFloat3( "Light Direction" , &lightDirection.x , -2.0f , 2.0f , "%.1f" );
             ImGui::NewLine();
             ImGui::Text( "Transformations" );
             ImGui::SliderFloat3( "Translation" , &translation.x , -10.0f , 10.0f , "%.2f" );
@@ -200,10 +217,10 @@ int main()
         shaderlist[ 0 ].UseShader();
         //Use Texture1
         texture.Use();
-        lighting.Update( ambientColor , intensity );
+        lighting.Update( ambientColor , intensity , lightDirection );
         lighting.Use( uniformambientColor , uniformambientIntensity , uniformDirection, uniformDiffuseIntensity);
 
-        glm::mat4 projectionMatrix = glm::perspective( glm::radians( mainWindow.GetFov() ) , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
+        glm::mat4 projectionMatrix = glm::perspective( glm::radians( 70.0f ) , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
         glUniformMatrix4fv( uniformProjection , 1 , GL_FALSE , glm::value_ptr( projectionMatrix ) );
         glUniformMatrix4fv( uniformView , 1 , GL_FALSE , glm::value_ptr( camera.CalculateViewMatrix() ));
 
@@ -213,11 +230,7 @@ int main()
         transformMatrix = glm::rotate( transformMatrix , glm::radians( rotation ) , rotationVector );
         glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
 
-        meshlist[ 0 ]->RenderMesh();
-
-        //2nd Texture
-        texture2.Use();
-        meshlist[ 1 ]->RenderMesh();
+        RenderMeshes( meshlist );
 
         /*Check for Errors*/
         GLenum err;

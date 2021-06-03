@@ -15,17 +15,18 @@ public:
 
 	GLfloat GetBufferWidth() { return bufferWidth; }
 	GLfloat GetBufferHeight() { return bufferHeight; }
-	GLfloat GetDeltaX();
-	GLfloat GetDeltaY();
-	GLfloat GetFov() { return fov; }
+
+	GLfloat GetMouseDeltaX();
+	GLfloat GetMouseDeltaY();
+	GLfloat GetScrollDelta();
 	
 	bool* GetKeys() { return keys; }
 	bool* GetButtons() { return buttons; }
 
 	GLFWwindow* GetWindow() { return mainWindow; }
 
-
 private:
+
 	GLFWwindow* mainWindow;
 
 	unsigned int bufferWidth;
@@ -35,7 +36,7 @@ private:
 	float deltax , deltay;
 	bool firstMove;
 
-	float fov;
+	float scrollDelta;
 
 	bool keys[ 1024 ] = { 0 };
 	bool buttons[ 8 ] = { 0 };

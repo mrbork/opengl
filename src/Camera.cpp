@@ -35,13 +35,10 @@ glm::mat4 Camera::CalculateViewMatrix()
 	return glm::lookAt( position , position + front , up );
 }
 
-void Camera::KeyControl( bool* keys , float deltaTime )
+void Camera::KeyControl( bool* keys , float deltaTime, float scroll)
 {
 
-	if ( keys[ GLFW_KEY_LEFT_SHIFT ] )
-		move = 10;
-	else
-		move = 5;
+	position += front * scroll;
 
 	float velocity = move * deltaTime;
 

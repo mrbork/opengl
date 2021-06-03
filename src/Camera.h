@@ -8,7 +8,7 @@ public:
 
 	glm::mat4 CalculateViewMatrix();
 
-	void KeyControl( bool* keys , float deltaTime);
+	void KeyControl( bool* keys , float deltaTime, float scroll);
 	void MouseControl( float deltaX , float deltaY , bool rightMouse);
 
 	float GetViewAnglesX() { return yaw; }

@@ -8,7 +8,7 @@ public:
 
 	void Use( unsigned int ambientColorLocation , unsigned int ambientIntensityLocation, unsigned int directionLocation, unsigned int diffuseIntensityLocation );
 
-	void Update( glm::vec3 ambientColor , float ambientIntensity );
+	void Update( glm::vec3 ambientColor , float ambientIntensity, glm::vec3 lightDirection );
 
 	~Lighting();
 

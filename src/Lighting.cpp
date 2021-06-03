@@ -27,10 +27,11 @@ void Lighting::Use( unsigned int ambientColorLocation , unsigned int ambientInte
 	glUniform1f( diffuseIntensityLocation , diffuseIntensity );
 }
 
-void Lighting::Update( glm::vec3 ambientColor , float ambientIntensity )
+void Lighting::Update( glm::vec3 ambientColor , float ambientIntensity , glm::vec3 lightDirection)
 {
 	this->ambientColor = ambientColor;
 	this->ambientIntensity = ambientIntensity;
+	this->direction = lightDirection;
 }
 
 Lighting::~Lighting()

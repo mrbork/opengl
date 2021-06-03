@@ -8,7 +8,6 @@ glWindow::glWindow()
     deltax = 0;
     deltay = 0;
     firstMove = true;
-    fov = 70.0f;
 }
 
 glWindow::glWindow( unsigned int width, unsigned int height)
@@ -18,7 +17,6 @@ glWindow::glWindow( unsigned int width, unsigned int height)
     deltax = 0;
     deltay = 0;
     firstMove = true;
-    fov = 70.0f;
 }
 
 glWindow::~glWindow()
@@ -66,8 +64,7 @@ void glWindow::HandleScroll( GLFWwindow* window , double xoffset , double yoffse
 {
     glWindow* MainWindow = static_cast< glWindow* >( glfwGetWindowUserPointer(window) );
 
-    MainWindow->fov -= (float)yoffset * 2;
-    MainWindow->fov = glm::clamp( MainWindow->fov , 20.0f , 70.0f );
+    MainWindow->scrollDelta = yoffset;
 }
 
 void glWindow::HandleButton( GLFWwindow* window , int button , int action , int mods )
@@ -101,17 +98,24 @@ void glWindow::CreateCallbacks()
     glfwSetMouseButtonCallback( mainWindow , HandleButton );
 }
 
-GLfloat glWindow::GetDeltaX()
+GLfloat glWindow::GetMouseDeltaX()
 {
     float delta = deltax;
     deltax = 0;
     return delta;
 }
 
-GLfloat glWindow::GetDeltaY()
+GLfloat glWindow::GetMouseDeltaY()
 {
     float delta = deltay;
     deltay = 0;
+    return delta;
+}
+
+GLfloat glWindow::GetScrollDelta()
+{
+    float delta = scrollDelta;
+    scrollDelta = 0;
     return delta;
 }
 
