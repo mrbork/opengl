@@ -14,6 +14,8 @@ public:
 	float GetViewAnglesX() { return yaw; }
 	float GetViewAnglesY() { return pitch; }
 
+	glm::vec3 GetCameraPosition() { return position; }
+
 private:
 	glm::vec3 position;
 	glm::vec3 up;

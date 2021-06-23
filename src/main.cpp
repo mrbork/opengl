@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Texture.h"
 #include "Lighting.h"
+#include "Material.h"
 
 std::vector<Mesh*> meshlist;
 std::vector<Shaders> shaderlist;
@@ -14,6 +15,7 @@ glWindow mainWindow;
 Camera camera;
 Texture texture;
 Lighting lighting;
+Material material;
 
 void CalcAverageNormals( unsigned int* indices , unsigned int indicesCount , float* vertices , unsigned int verticesCount , unsigned int vertexLength , unsigned int normalOffset )
 {
@@ -50,66 +52,44 @@ void CalcAverageNormals( unsigned int* indices , unsigned int indicesCount , flo
 
 void CreateTriangle() {
 
-    float vertices[] {
-       -0.5f,-0.5f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f, 0.0f, // Left
-        0.5f,-0.5f, 0.0f,  1.0f, 0.0f,  0.0f, 0.0f, 0.0f, // Right
-        0.0f, 0.5f, 0.0f,  0.5f, 1.0f,  0.0f, 0.0f, 0.0f, // Top
-        0.0f,-0.5f, 0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 0.0f  // Back Z
+    float vertices[64]{
+       -0.5f, -0.5f, -0.3f,  0.0f, 0.0f,  0.0f, 0.0f, 0.0f, // Left
+        0.5f, -0.5f, -0.3f,  1.0f, 0.0f,  0.0f, 0.0f, 0.0f, // Right
+        0.0f,  0.5f,  0.0f,  0.5f, 1.0f,  0.0f, 0.0f, 0.0f, // Top
+        0.0f, -0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 0.0f, // Back Z
+
+        -0.5f, -0.5f, -0.3f,  0.0f, 0.0f,  0.0f, 0.0f, 0.0f, // Left
+        0.5f, -0.5f, -0.3f,  1.0f, 0.0f,  0.0f, 0.0f, 0.0f, // Right
+        0.0f,  0.5f,  0.0f,  0.5f, 1.0f,  0.0f, 0.0f, 0.0f, // Top
+        0.0f, -0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 0.0f  // Back Z
     };
 
-    //unsigned int indices[]{
-    //    0, 1, 2, // Front
-    //    3, 2, 1, // Right
-    //    3, 2, 0, // Left
-    //    3, 0, 1  // Bottom
-    //};
-
-    unsigned int indices[]{
+    unsigned int indices[24]{
         0, 1, 2, // Front
         3, 1, 2, // Right
         3, 0, 2, // Left
         3, 1, 0  // Bottom
     };
 
-    CalcAverageNormals( indices , 12 , vertices , 32 , 8 , 5 );
-
-    for ( int i = 0; i < 2; i++)
+    for ( int i = 1; i < 2; i++ )
     {
-        Mesh* obj = new Mesh();
-
-        /*vertices[ 0 ]  += glm::cos( glm::radians( ( float )i ) ) * 0.1f;
-        vertices[ 8 ]  += glm::cos( glm::radians( ( float )i ) ) * 0.1f;
-        vertices[ 16 ] += glm::cos( glm::radians( ( float )i ) ) * 0.1f;
-        vertices[ 24 ] += glm::cos( glm::radians( ( float )i ) ) * 0.1f;
-
-
-        vertices[ 2 ]  += glm::sin( glm::radians( ( float )i ) ) * 0.1f;
-        vertices[ 10 ] += glm::sin( glm::radians( ( float )i ) ) * 0.1f;
-        vertices[ 18 ] += glm::sin( glm::radians( ( float )i ) ) * 0.1f;
-        vertices[ 26 ] += glm::sin( glm::radians( ( float )i ) ) * 0.1f;*/
-
-        vertices[ 0 ]++;
-        vertices[ 8 ]++;
-        vertices[ 16 ]++;
-        vertices[ 24 ]++;
-
-
-        obj->CreateMesh( vertices , 32 , indices , 12 );
-        meshlist.push_back( obj );
+        vertices[ 0 + 32 * i ]++;
+        vertices[ 8 + 32 * i ]++;
+        vertices[ 16 + 32 * i ]++;
+        vertices[ 24 + 32 * i ]++;
     }
 
-}
+    for ( int j = 0; j < 12; j ++ )
+    {
+        indices[ j + 12 ] = indices[ j ] + 4;
+    }
 
-void RenderMeshes( std::vector<Mesh*>& meshlist )
-{
-    for ( auto& mesh : meshlist )
-        mesh->RenderMesh();
-}
+    CalcAverageNormals( indices , 24 , vertices , 64 , 8 , 5 );
 
-void ClearMeshes( std::vector<Mesh*>& meshlist )
-{
-    for ( auto& mesh : meshlist )
-        mesh->ClearMesh();
+    Mesh* obj = new Mesh();
+    obj->CreateMesh( vertices , 64 , indices , 24 );
+    meshlist.push_back( obj );
+
 }
 
 int main()
@@ -126,7 +106,8 @@ int main()
     /*Setup Dear ImGui style*/
     ImGui::StyleColorsDark();
 
-    unsigned int uniformModel , uniformProjection, uniformView, uniformambientColor, uniformambientIntensity, uniformDirection, uniformDiffuseIntensity;
+    unsigned int uniformModel , uniformProjection, uniformView, uniformCameraPosition,
+        uniformambientColor, uniformambientIntensity, uniformDirection, uniformDiffuseIntensity, uniformSpecularIntensity, uniformShininess;
     float intensity = 0.2f;
     shaderlist.push_back( Shaders() );
 
@@ -135,25 +116,29 @@ int main()
 
     camera = Camera( glm::vec3( 0.f , 0.5f , 1.0f ) , glm::vec3( 0.f , 1.f , 0.f ) , -90.f , 0.f , 5.f , .5f );
 
-    texture = Texture( "Textures/3.jpg" );
+    texture = Texture( "Textures/brick.png" );
     texture.Load();
 
-    lighting = Lighting(1.0f, 1.0f, 1.0f, intensity , 2.0f, -2.0f, 0.0f, 1.0f);
+    lighting = Lighting(1.0f, 1.0f, 1.0f, intensity , 0.0f, 1.0f, 1.0f, 1.0f);
+    material = Material( 1.0f , 64.0f );
 
     uniformModel = glGetUniformLocation( shaderlist[0].GetProgram() , "transformation" );
     uniformProjection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "projection" );
     uniformView = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "view" );
+    uniformCameraPosition = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "cameraPos" );
     uniformambientColor = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.color" );
     uniformambientIntensity = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.ambientIntensity" );
     uniformDirection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.direction" );
     uniformDiffuseIntensity = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.diffuseIntensity" );
+    uniformSpecularIntensity = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "material.specularIntensity" );
+    uniformShininess = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "material.Shininess" );
 
 
     float rotation = 0.0f;
     glm::vec3 rotationVector{ 0.0f, 1.0f , 0.0f };
     glm::vec3 translation{ 0.0f, 0.0f , -1.0f };
     glm::vec3 ambientColor{ 1.0f, 1.0f, 1.0f };
-    glm::vec3 lightDirection{ 2.0f, -2.0f, 0.0f };
+    glm::vec3 lightDirection{ 0.0f, 1.0f, 1.0f };
     bool rotate = false;
     std::string toggle = "Start";
 
@@ -204,7 +189,7 @@ int main()
             ImGui::SliderFloat3( "Light Direction" , &lightDirection.x , -2.0f , 2.0f , "%.1f" );
             ImGui::NewLine();
             ImGui::Text( "Transformations" );
-            ImGui::SliderFloat3( "Translation" , &translation.x , -10.0f , 10.0f , "%.2f" );
+            ImGui::DragFloat3( "Translation" , &translation.x , 0.1f );
             ImGui::SliderFloat( "Rotation" , &rotation , 0 , 360 );
             ImGui::SameLine();
             if ( ImGui::Button( toggle.c_str() ) )
@@ -217,20 +202,23 @@ int main()
         shaderlist[ 0 ].UseShader();
         //Use Texture1
         texture.Use();
+        material.UseMaterial( uniformSpecularIntensity , uniformShininess );
         lighting.Update( ambientColor , intensity , lightDirection );
         lighting.Use( uniformambientColor , uniformambientIntensity , uniformDirection, uniformDiffuseIntensity);
 
         glm::mat4 projectionMatrix = glm::perspective( glm::radians( 70.0f ) , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
         glUniformMatrix4fv( uniformProjection , 1 , GL_FALSE , glm::value_ptr( projectionMatrix ) );
         glUniformMatrix4fv( uniformView , 1 , GL_FALSE , glm::value_ptr( camera.CalculateViewMatrix() ));
+        glUniform3f( uniformCameraPosition , camera.GetCameraPosition().x , camera.GetCameraPosition().y , camera.GetCameraPosition().z );
 
         /*Transformation*/
         glm::mat4 transformMatrix( 1.0f );
         transformMatrix = glm::translate( transformMatrix , translation );
         transformMatrix = glm::rotate( transformMatrix , glm::radians( rotation ) , rotationVector );
+        //transformMatrix = glm::scale( transformMatrix , glm::vec3( 1.0f , 1.0f , 1.0f ) );
         glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
 
-        RenderMeshes( meshlist );
+        meshlist[ 0 ]->RenderMesh();
 
         /*Check for Errors*/
         GLenum err;
@@ -245,7 +233,7 @@ int main()
 
     }
 
-    ClearMeshes( meshlist );
+    meshlist[ 0 ]->ClearMesh();
 
     /*Clean Up IMGUI*/
     ImGui_ImplOpenGL3_Shutdown();

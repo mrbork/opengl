@@ -19,3 +19,20 @@
 #include <IMGUI/imgui.h>
 #include <IMGUI/imgui_impl_glfw.h>
 #include <IMGUI/imgui_impl_opengl3.h>
+
+struct Vec2
+{
+	float x , y;
+};
+
+struct Vec3
+{
+	float x , y , z;
+};
+
+struct Vertex
+{
+	Vec3 position;
+	Vec2 texCord;
+	Vec3 normal;
+};
