@@ -36,3 +36,5 @@ struct Vertex
 	Vec2 texCord;
 	Vec3 normal;
 };
+
+const unsigned int MAX_POINTLIGHT_COUNT = 3;

@@ -5,7 +5,6 @@
 #include "glWindow.h" 
 #include "Camera.h"
 #include "Texture.h"
-#include "Lighting.h"
 #include "Material.h"
 
 std::vector<Mesh*> meshlist;
@@ -14,7 +13,8 @@ std::vector<Shaders> shaderlist;
 glWindow mainWindow;
 Camera camera;
 Texture texture;
-Lighting lighting;
+DirectionalLight mainLight;
+PointLight pointLight[ MAX_POINTLIGHT_COUNT ];
 Material material;
 
 void CalcAverageNormals( unsigned int* indices , unsigned int indicesCount , float* vertices , unsigned int verticesCount , unsigned int vertexLength , unsigned int normalOffset )
@@ -90,6 +90,24 @@ void CreateTriangle() {
     obj->CreateMesh( vertices , 64 , indices , 24 );
     meshlist.push_back( obj );
 
+
+    float floorVertices[ 32 ]
+    {
+        -10.0f, -2.0f, -10.0f,  0.0f,  0.0f, 0.0f, -1.0f, 0.0f,
+         10.0f, -2.0f, -10.0f, 10.0f,  0.0f, 0.0f, -1.0f, 0.0f,
+        -10.0f, -2.0f,  10.0f,  0.0f, 10.0f, 0.0f, -1.0f, 0.0f,
+         10.0f, -2.0f,  10.0f, 10.0f, 10.0f, 0.0f, -1.0f, 0.0f
+    };
+
+    unsigned int floorIndices[ 6 ]
+    {
+        0, 2, 1,
+        1, 2, 3
+    };
+
+    Mesh* obj2 = new Mesh();
+    obj2->CreateMesh( floorVertices , 32 , floorIndices , 12 );
+    meshlist.push_back( obj2 );
 }
 
 int main()
@@ -106,9 +124,6 @@ int main()
     /*Setup Dear ImGui style*/
     ImGui::StyleColorsDark();
 
-    unsigned int uniformModel , uniformProjection, uniformView, uniformCameraPosition,
-        uniformambientColor, uniformambientIntensity, uniformDirection, uniformDiffuseIntensity, uniformSpecularIntensity, uniformShininess;
-    float intensity = 0.2f;
     shaderlist.push_back( Shaders() );
 
     CreateTriangle();
@@ -119,26 +134,18 @@ int main()
     texture = Texture( "Textures/brick.png" );
     texture.Load();
 
-    lighting = Lighting(1.0f, 1.0f, 1.0f, intensity , 0.0f, 1.0f, 1.0f, 1.0f);
+    mainLight = DirectionalLight(1.0f, 1.0f, 1.0f, 0.2f , 1.0f, 0.0f, 1.0f, 1.0f);
+    pointLight[ 0 ] = PointLight( 0.0f , 1.0f , 0.0f , 0.1f , 1.0f , 0.5f , 0.0f , 0.0f , 0.3f , 0.2f , 0.1f );
+    pointLight[ 1 ] = PointLight( 1.0f , 0.0f , 0.0f , 0.1f , 1.0f , -2.0f , 0.0f , 0.0f , 0.3f , 0.2f , 0.1f );
+
+    unsigned int pointLightCount = 2;
+
     material = Material( 1.0f , 64.0f );
-
-    uniformModel = glGetUniformLocation( shaderlist[0].GetProgram() , "transformation" );
-    uniformProjection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "projection" );
-    uniformView = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "view" );
-    uniformCameraPosition = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "cameraPos" );
-    uniformambientColor = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.color" );
-    uniformambientIntensity = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.ambientIntensity" );
-    uniformDirection = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.direction" );
-    uniformDiffuseIntensity = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "directionalLight.diffuseIntensity" );
-    uniformSpecularIntensity = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "material.specularIntensity" );
-    uniformShininess = glGetUniformLocation( shaderlist[ 0 ].GetProgram() , "material.Shininess" );
-
 
     float rotation = 0.0f;
     glm::vec3 rotationVector{ 0.0f, 1.0f , 0.0f };
     glm::vec3 translation{ 0.0f, 0.0f , -1.0f };
-    glm::vec3 ambientColor{ 1.0f, 1.0f, 1.0f };
-    glm::vec3 lightDirection{ 0.0f, 1.0f, 1.0f };
+
     bool rotate = false;
     std::string toggle = "Start";
 
@@ -183,11 +190,6 @@ int main()
             ImGui::Text( "Pitch: %.1f" , camera.GetViewAnglesY() );
             ImGui::Text( "Yaw: %.1f" , camera.GetViewAnglesX() );
             ImGui::NewLine();
-            ImGui::Text( "Lighting" );
-            ImGui::SliderFloat( "Ambient Intensity" , &intensity , 0.0f , 1.0f );
-            ImGui::SliderFloat3( "Ambient Color" , &ambientColor.x , 0.0f , 1.0f , "%.1f" );
-            ImGui::SliderFloat3( "Light Direction" , &lightDirection.x , -2.0f , 2.0f , "%.1f" );
-            ImGui::NewLine();
             ImGui::Text( "Transformations" );
             ImGui::DragFloat3( "Translation" , &translation.x , 0.1f );
             ImGui::SliderFloat( "Rotation" , &rotation , 0 , 360 );
@@ -202,23 +204,27 @@ int main()
         shaderlist[ 0 ].UseShader();
         //Use Texture1
         texture.Use();
-        material.UseMaterial( uniformSpecularIntensity , uniformShininess );
-        lighting.Update( ambientColor , intensity , lightDirection );
-        lighting.Use( uniformambientColor , uniformambientIntensity , uniformDirection, uniformDiffuseIntensity);
+        material.UseMaterial( shaderlist[ 0 ].GetSpecularIntensity(), shaderlist[ 0 ].GetShininess() );
 
+        /*Use lighting*/
+        shaderlist[ 0 ].SetDirectionalLight( &mainLight );
+        shaderlist[ 0 ].SetPointLight( pointLight , pointLightCount );
+
+        /*Setup Camera*/
         glm::mat4 projectionMatrix = glm::perspective( glm::radians( 70.0f ) , mainWindow.GetBufferWidth() / mainWindow.GetBufferHeight() , 0.1f , 100.0f );
-        glUniformMatrix4fv( uniformProjection , 1 , GL_FALSE , glm::value_ptr( projectionMatrix ) );
-        glUniformMatrix4fv( uniformView , 1 , GL_FALSE , glm::value_ptr( camera.CalculateViewMatrix() ));
-        glUniform3f( uniformCameraPosition , camera.GetCameraPosition().x , camera.GetCameraPosition().y , camera.GetCameraPosition().z );
+        glUniformMatrix4fv( shaderlist[ 0 ].GetProjection() , 1 , GL_FALSE , glm::value_ptr( projectionMatrix ) );
+        glUniformMatrix4fv( shaderlist[ 0 ].GetView() , 1 , GL_FALSE , glm::value_ptr( camera.CalculateViewMatrix() ));
+        glUniform3f( shaderlist[ 0 ].GetCameraPosition() , camera.GetCameraPosition().x , camera.GetCameraPosition().y , camera.GetCameraPosition().z );
 
         /*Transformation*/
         glm::mat4 transformMatrix( 1.0f );
         transformMatrix = glm::translate( transformMatrix , translation );
         transformMatrix = glm::rotate( transformMatrix , glm::radians( rotation ) , rotationVector );
         //transformMatrix = glm::scale( transformMatrix , glm::vec3( 1.0f , 1.0f , 1.0f ) );
-        glUniformMatrix4fv( uniformModel , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
+        glUniformMatrix4fv( shaderlist[ 0 ].GetModel() , 1 , GL_FALSE , glm::value_ptr( transformMatrix ) );
 
         meshlist[ 0 ]->RenderMesh();
+        meshlist[ 1 ]->RenderMesh();
 
         /*Check for Errors*/
         GLenum err;
