@@ -3,8 +3,8 @@
 
 glWindow::glWindow()
 {
-    bufferWidth = 1000;
-    bufferHeight = 770;
+    bufferWidth = 1200;
+    bufferHeight = 850;
     deltax = 0;
     deltay = 0;
     firstMove = true;

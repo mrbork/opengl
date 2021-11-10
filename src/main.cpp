@@ -131,7 +131,7 @@ int main()
 
     camera = Camera( glm::vec3( 0.f , 0.5f , 1.0f ) , glm::vec3( 0.f , 1.f , 0.f ) , -90.f , 0.f , 5.f , .5f );
 
-    texture = Texture( "Textures/brick.png" );
+    texture = Texture( "Textures/white.jpg" );
     texture.Load();
 
     mainLight = DirectionalLight(1.0f, 1.0f, 1.0f, 0.2f , 1.0f, 0.0f, 1.0f, 1.0f);
@@ -182,6 +182,8 @@ int main()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        ImGui::ShowDemoWindow();
+
         {
             /*Render GUI*/
             ImGui::Begin( ( const char* )glGetString( GL_RENDERER ) , NULL , ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse );
@@ -197,6 +199,20 @@ int main()
             if ( ImGui::Button( toggle.c_str() ) )
                 rotate = !rotate;
             ImGui::SliderFloat3( "Rotation Vector" , &rotationVector.x , -5.0f , 5.0f , "%.1f" );
+
+            for ( int i = 0; i < 3; i++ )
+            {
+                ImGui::PushID( i );
+                bool node = ImGui::TreeNode( "Pointlight" , "%d", i);
+
+                if ( node )
+                {
+                    ImGui::Text( "Test" );
+                    ImGui::TreePop();
+                }
+                ImGui::PopID();
+            }
+
             ImGui::End();
         }
 

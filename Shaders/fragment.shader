@@ -5,7 +5,7 @@ in vec2 texelCoord;
 in vec3 Normal;
 in vec3 FragPos;
 
-out vec4 gl_FragColor;
+out vec4 fragColor;
 
 const int MAX_POINTLIGHT_COUNT = 3;
 
@@ -102,5 +102,5 @@ void main()
 	vec4 finalColor = CalcDirectionalLight() + CalcPointLight();
 	
 	
-	gl_FragColor = texture(textureSampler, texelCoord) * finalColor;
+	fragColor = texture(textureSampler, texelCoord) * finalColor;
 }
