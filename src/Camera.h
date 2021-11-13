@@ -1,8 +1,4 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#include <GLM/glm.hpp>
-#include <GLM/gtc/matrix_transform.hpp>
+#include "pch.h"
 
 class Camera
 {
@@ -12,11 +8,13 @@ public:
 
 	glm::mat4 CalculateViewMatrix();
 
-	void KeyControl( bool* keys , float deltaTime);
+	void KeyControl( bool* keys , float deltaTime, float scroll);
 	void MouseControl( float deltaX , float deltaY , bool rightMouse);
 
 	float GetViewAnglesX() { return yaw; }
 	float GetViewAnglesY() { return pitch; }
+
+	glm::vec3 GetCameraPosition() { return position; }
 
 private:
 	glm::vec3 position;

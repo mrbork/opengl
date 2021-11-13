@@ -1,6 +1,4 @@
-#include <GL/glew.h>
-
-#include "stb_image.h"
+#include "pch.h"
 
 
 class Texture

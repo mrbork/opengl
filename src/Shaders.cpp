@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Shaders.h"
 
 Shaders::Shaders()
@@ -5,6 +6,8 @@ Shaders::Shaders()
     vertexShader = 0;
     fragmentShader = 0;
     program = 0;
+
+    uniformpointLightCount = 0;
 }
 
 unsigned int Shaders::CompileShader( unsigned int type , const std::string& src )
@@ -81,6 +84,61 @@ void Shaders::CompileProgram()
     glDeleteShader( vertexShader );
     glDeleteShader( fragmentShader );
 
+    uniformModel = glGetUniformLocation( program , "transformation" );
+    uniformProjection = glGetUniformLocation( program , "projection" );
+    uniformView = glGetUniformLocation( program , "view" );
+    uniformCameraPosition = glGetUniformLocation( program , "cameraPos" );
+    uniformSpecularIntensity = glGetUniformLocation( program , "material.specularIntensity" );
+    uniformShininess = glGetUniformLocation( program , "material.Shininess" );
+
+    directionalLight.uniformColor = glGetUniformLocation( program , "directionalLight.base.color" );
+    directionalLight.uniformambientIntensity = glGetUniformLocation( program , "directionalLight.base.ambientIntensity" );
+    directionalLight.uniformdiffuseIntensity = glGetUniformLocation( program , "directionalLight.base.diffuseIntensity" );
+    directionalLight.uniformDirection = glGetUniformLocation( program , "directionalLight.direction" );
+
+    uniformpointLightCount = glGetUniformLocation( program , "pointLightCount" );
+
+    for ( int i = 0; i < MAX_POINTLIGHT_COUNT; i++ )
+    {
+        char locBuffer[ 100 ] = { '\0' };
+
+        snprintf( locBuffer , sizeof( locBuffer ) , "pointLight[%d].base.color" , i );
+        pointLight[ i ].uniformColor = glGetUniformLocation( program , locBuffer );
+
+        snprintf( locBuffer , sizeof( locBuffer ) , "pointLight[%d].base.ambientIntensity" , i );
+        pointLight[ i ].uniformambientIntensity = glGetUniformLocation( program , locBuffer );
+
+        snprintf( locBuffer , sizeof( locBuffer ) , "pointLight[%d].base.diffuseIntensity" , i );
+        pointLight[ i ].uniformdiffuseIntensity = glGetUniformLocation( program , locBuffer );
+
+        snprintf( locBuffer , sizeof( locBuffer ) , "pointLight[%d].position" , i );
+        pointLight[ i ].uniformPosition = glGetUniformLocation( program , locBuffer );
+
+        snprintf( locBuffer , sizeof( locBuffer ) , "pointLight[%d].constant" , i );
+        pointLight[ i ].uniformConstant = glGetUniformLocation( program , locBuffer );
+
+        snprintf( locBuffer , sizeof( locBuffer ) , "pointLight[%d].linear" , i );
+        pointLight[ i ].uniformLinear = glGetUniformLocation( program , locBuffer );
+
+        snprintf( locBuffer , sizeof( locBuffer ) , "pointLight[%d].exponent" , i );
+        pointLight[ i ].uniformExponent = glGetUniformLocation( program , locBuffer );
+    }
+}
+
+void Shaders::SetDirectionalLight( DirectionalLight* dLight )
+{
+    dLight->Use( directionalLight.uniformColor , directionalLight.uniformambientIntensity , directionalLight.uniformdiffuseIntensity , directionalLight.uniformDirection );
+}
+
+void Shaders::SetPointLight( PointLight* pLight , unsigned int pointLightCount )
+{
+    if ( pointLightCount > MAX_POINTLIGHT_COUNT ) pointLightCount = MAX_POINTLIGHT_COUNT;
+    glUniform1i( uniformpointLightCount , pointLightCount );
+
+    for ( unsigned int i = 0; i < pointLightCount; i++ )
+    {
+        pLight[ i ].Use( pointLight[ i ].uniformColor , pointLight[ i ].uniformambientIntensity , pointLight[ i ].uniformdiffuseIntensity , pointLight[ i ].uniformPosition , pointLight[ i ].uniformConstant , pointLight[ i ].uniformLinear , pointLight[ i ].uniformExponent );
+    }
 }
 
 void Shaders::ClearShader()
